@@ -1,13 +1,15 @@
 export const theme = {
   colors: {
-    primary: "#0b4f6c",
-    secondary: "#01baef",
-    accent: "#fbb13c",
-    background: "#f7f9fa",
+    primary: "#1b2559",
+    primaryDark: "#12173d",
+    secondary: "#c62828",
+    accent: "#f2b705",
+    lightBlue: "#dceefb",
+    background: "#f5f7fa",
     surface: "#ffffff",
-    text: "#1c2b33",
-    textLight: "#5a6b73",
-    border: "#e1e6e8",
+    text: "#1b2559",
+    textLight: "#5a6270",
+    border: "#e2e6ea",
   },
   fonts: {
     base: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",

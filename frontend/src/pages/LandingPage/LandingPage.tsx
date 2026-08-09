@@ -1,33 +1,62 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import logo from "../../assets/pescamarche-logo.png";
+import banner from "../../assets/pescamarche-banner.jpeg";
 
 const Hero = styled.section`
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   gap: 1.5rem;
-  padding: 6rem 2rem;
-  background: linear-gradient(
-    135deg,
-    ${({ theme }) => theme.colors.primary},
-    ${({ theme }) => theme.colors.secondary}
-  );
+  padding: 5rem 2rem;
+  overflow: hidden;
+  background-image:
+    linear-gradient(
+      135deg,
+      ${({ theme }) => `${theme.colors.primary}e6`},
+      ${({ theme }) => `${theme.colors.primaryDark}f2`}
+    ),
+    url(${banner});
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
   color: #fff;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    padding: 3rem 1.25rem;
+  }
+`;
+
+const HeroLogo = styled.img`
+  height: 140px;
+  width: auto;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    height: 100px;
+  }
 `;
 
 const Title = styled.h1`
-  font-size: 2.75rem;
+  font-size: 2.5rem;
+  max-width: 800px;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.2rem;
-  max-width: 560px;
+  font-size: 1.15rem;
+  max-width: 640px;
+  color: ${({ theme }) => theme.colors.lightBlue};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    font-size: 1rem;
+  }
 `;
 
 const CtaButton = styled(Link)`
@@ -50,6 +79,10 @@ const Section = styled.section`
   margin: 0 auto;
   padding: 4rem 2rem;
   text-align: center;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    padding: 3rem 1.25rem;
+  }
 `;
 
 const Features = styled.div`
@@ -67,35 +100,63 @@ const Feature = styled.div`
   padding: 1.5rem;
 `;
 
+const ProductsTeaser = styled.section`
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 4rem 2rem;
+  text-align: center;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    padding: 3rem 1.25rem;
+  }
+`;
+
+const ProductsTeaserText = styled.p`
+  max-width: 560px;
+  margin: 0.75rem auto 1.75rem;
+  color: ${({ theme }) => theme.colors.textLight};
+`;
+
 export function LandingPage() {
   return (
     <>
       <Hero>
-        <Title>Todo lo que necesitás para tu próxima pesca</Title>
+        <HeroLogo src={logo} alt="Pescamarche - Pesca & Camping" />
+        <Title>BIENVENIDOS A PESCAMARCHE</Title>
         <Subtitle>
-          Cañas, reels, carnadas y accesorios seleccionados para pescadores de
-          agua dulce y salada.
+          Somos una casa de Pesca, Camping y más... Única casa de pesca atendida
+          por pescadores, contamos con asesoramiento personalizado y consejos
+          para una excelente pesca!
         </Subtitle>
-        <CtaButton to="/productos">Ver productos</CtaButton>
+        <CtaButton to="/contacto">Contactanos</CtaButton>
       </Hero>
 
       <Section>
         <h2>¿Por qué elegirnos?</h2>
         <Features>
           <Feature>
-            <h3>Calidad garantizada</h3>
-            <p>Productos de marcas reconocidas, probados en el agua.</p>
+            <h3>Atendido por pescadores</h3>
+            <p>Te asesoramos con la experiencia de quienes viven la pesca.</p>
           </Feature>
           <Feature>
-            <h3>Envíos a todo el país</h3>
-            <p>Recibí tu equipo donde estés, de forma rápida y segura.</p>
+            <h3>Pesca, camping y más</h3>
+            <p>Indumentaria, náutica, trekking, bazar y mucho más.</p>
           </Feature>
           <Feature>
-            <h3>Asesoramiento experto</h3>
+            <h3>Asesoramiento personalizado</h3>
             <p>Te ayudamos a elegir el equipo ideal para tu estilo de pesca.</p>
           </Feature>
         </Features>
       </Section>
+
+      <ProductsTeaser>
+        <h2>Nuestros productos</h2>
+        <ProductsTeaserText>
+          Muy pronto vas a poder ver acá nuestro catálogo completo. Mientras
+          tanto, escribinos y te asesoramos con lo que estás buscando.
+        </ProductsTeaserText>
+        <CtaButton to="/productos">Ver productos</CtaButton>
+      </ProductsTeaser>
     </>
   );
 }

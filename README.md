@@ -1,4 +1,4 @@
-# Pesca Marché
+# Pescamarche
 
 E-commerce de artículos de pesca. Monorepo simple con dos proyectos independientes.
 
