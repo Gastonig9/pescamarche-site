@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   TextField,
+  Typography,
 } from "@mui/material";
 import type { Product, ProductInput } from "../../features/products/types";
 
@@ -27,13 +30,13 @@ const emptyForm = {
   category: "",
   subcategory: "",
   sku: "",
-  images: "",
+  images: [] as string[],
 };
 
 type FormState = typeof emptyForm;
 
 function toFormState(product: Product | null): FormState {
-  if (!product) return emptyForm;
+  if (!product) return { ...emptyForm, images: [] };
   return {
     name: product.name,
     description: product.description,
@@ -43,7 +46,7 @@ function toFormState(product: Product | null): FormState {
     category: product.category ?? "",
     subcategory: product.subcategory ?? "",
     sku: product.sku ?? "",
-    images: product.images?.join(", ") ?? "",
+    images: product.images ?? [],
   };
 }
 
@@ -54,15 +57,48 @@ export function ProductFormDialog({
   onSubmit,
 }: ProductFormDialogProps) {
   const [form, setForm] = useState<FormState>(emptyForm);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setForm(toFormState(initialValue));
   }, [initialValue, open]);
 
-  function handleChange(field: keyof FormState) {
+  function handleChange(field: keyof Omit<FormState, "images">) {
     return (event: ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: event.target.value }));
     };
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          }),
+      ),
+    ).then((base64Images) => {
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...base64Images],
+      }));
+    });
+
+    // reset so the same file can be re-selected if removed
+    event.target.value = "";
+  }
+
+  function removeImage(index: number) {
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   }
 
   async function handleSubmit() {
@@ -75,10 +111,7 @@ export function ProductFormDialog({
       category: form.category || undefined,
       subcategory: form.subcategory || undefined,
       sku: form.sku || undefined,
-      images: form.images
-        .split(",")
-        .map((url) => url.trim())
-        .filter(Boolean),
+      images: form.images,
     });
   }
 
@@ -161,15 +194,80 @@ export function ProductFormDialog({
               fullWidth
             />
           </Grid>
+
+          {/* Image upload */}
           <Grid size={12}>
-            <TextField
-              label="Imágenes (URLs separadas por coma)"
-              value={form.images}
-              onChange={handleChange("images")}
-              fullWidth
-              multiline
-              minRows={2}
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Imágenes del producto
+            </Typography>
+
+            {/* Previews */}
+            {form.images.length > 0 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mb: 1.5,
+                }}
+              >
+                {form.images.map((src, i) => (
+                  <Box
+                    key={i}
+                    sx={{ position: "relative", width: 80, height: 80 }}
+                  >
+                    <Box
+                      component="img"
+                      src={src}
+                      alt={`imagen ${i + 1}`}
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => removeImage(i)}
+                      sx={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        bgcolor: "error.main",
+                        color: "#fff",
+                        width: 20,
+                        height: 20,
+                        fontSize: "0.7rem",
+                        "&:hover": { bgcolor: "error.dark" },
+                      }}
+                    >
+                      ✕
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleFileChange}
             />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {form.images.length > 0
+                ? "Agregar más imágenes"
+                : "Seleccionar imágenes"}
+            </Button>
           </Grid>
         </Grid>
       </DialogContent>

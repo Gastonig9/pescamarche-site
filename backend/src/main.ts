@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import { exec } from 'child_process';
 import { AppModule } from './app.module';
 
@@ -23,7 +24,11 @@ function openInBrowser(url: string): void {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable default body parser so we can set a higher limit for base64 images
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ limit: '10mb', extended: true }));
+
   const configService = app.get(ConfigService);
 
   app.setGlobalPrefix('api');

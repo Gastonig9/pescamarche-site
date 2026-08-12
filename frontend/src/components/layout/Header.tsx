@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink as RouterNavLink } from "react-router-dom";
 import styled from "styled-components";
 import logo from "../../assets/pescamarche-logo.png";
+import { useAppSelector } from "../../app/hooks";
 
 const StyledHeader = styled.header`
   display: flex;
@@ -97,8 +98,48 @@ const NavLink = styled(RouterNavLink)`
   }
 `;
 
+const CartButton = styled(Link)`
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+const CartBadge = styled.span`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: ${({ theme }) => theme.colors.accent};
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+`;
+
 export function Header() {
   const [open, setOpen] = useState(false);
+  const cartCount = useAppSelector((state) =>
+    state.cart.items.reduce((sum, i) => sum + i.quantity, 0),
+  );
 
   return (
     <StyledHeader>
@@ -134,6 +175,27 @@ export function Header() {
         <NavLink to="/contacto" onClick={() => setOpen(false)}>
           Contacto
         </NavLink>
+        <CartButton
+          to="/carrito"
+          onClick={() => setOpen(false)}
+          aria-label="Carrito"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+          {cartCount > 0 && (
+            <CartBadge>{cartCount > 99 ? "99+" : cartCount}</CartBadge>
+          )}
+        </CartButton>
       </Nav>
     </StyledHeader>
   );
