@@ -1,16 +1,27 @@
-import { useState } from "react";
-import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
+import { useRef, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  Snackbar,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
   useCreateProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
   useUpdateProductMutation,
+  useBulkImportProductsMutation,
 } from "../../features/products/productsApi";
+import type { BulkImportResult } from "../../features/products/productsApi";
 import type { Product, ProductInput } from "../../features/products/types";
 import { ProductFormDialog } from "./ProductFormDialog";
 
@@ -19,9 +30,15 @@ export function ProductsPage() {
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
+  const [bulkImport] = useBulkImportProductsMutation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [importResult, setImportResult] = useState<BulkImportResult | null>(
+    null,
+  );
+  const [importError, setImportError] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleNew() {
     setEditingProduct(null);
@@ -47,6 +64,22 @@ export function ProductsPage() {
       await createProduct(values);
     }
     setDialogOpen(false);
+  }
+
+  async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const result = await bulkImport(formData).unwrap();
+      setImportResult(result);
+    } catch {
+      setImportError("Error al importar el archivo. Revisá el formato.");
+    }
   }
 
   const columns: GridColDef<Product>[] = [
@@ -91,9 +124,29 @@ export function ProductsPage() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Productos
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
-          Nuevo producto
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: "none" }}
+            onChange={handleExcelUpload}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Importar Excel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleNew}
+          >
+            Nuevo producto
+          </Button>
+        </Stack>
       </Stack>
 
       <Box sx={{ height: 560, backgroundColor: "background.paper" }}>
@@ -116,6 +169,53 @@ export function ProductsPage() {
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
       />
+
+      {/* Bulk import result */}
+      <Snackbar
+        open={Boolean(importResult)}
+        autoHideDuration={8000}
+        onClose={() => setImportResult(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={
+            importResult && importResult.errors.length > 0
+              ? "warning"
+              : "success"
+          }
+          onClose={() => setImportResult(null)}
+          sx={{ width: "100%" }}
+        >
+          {importResult && (
+            <>
+              {importResult.created} producto
+              {importResult.created !== 1 ? "s" : ""} importado
+              {importResult.created !== 1 ? "s" : ""} correctamente.
+              {importResult.skipped > 0 &&
+                ` ${importResult.skipped} fila${importResult.skipped !== 1 ? "s" : ""} omitida${importResult.skipped !== 1 ? "s" : ""}.`}
+              {importResult.errors.length > 0 && (
+                <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                  {importResult.errors.map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </Alert>
+      </Snackbar>
+
+      {/* Import error */}
+      <Snackbar
+        open={Boolean(importError)}
+        autoHideDuration={5000}
+        onClose={() => setImportError("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity="error" onClose={() => setImportError("")}>
+          {importError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

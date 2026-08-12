@@ -5,6 +5,23 @@ import { Product, ProductDocument } from './schemas/product.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
+interface BulkRow {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  sku?: string;
+  brand?: string;
+  category?: string;
+  subcategory?: string;
+}
+
+export interface BulkImportResult {
+  created: number;
+  skipped: number;
+  errors: string[];
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -45,5 +62,55 @@ export class ProductsService {
     if (!result) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
+  }
+
+  async bulkCreate(rows: BulkRow[]): Promise<BulkImportResult> {
+    const valid: BulkRow[] = [];
+    const errors: string[] = [];
+
+    rows.forEach((row, i) => {
+      const rowNum = i + 2; // +2: header row + 1-based index
+      if (!row.name || !row.description) {
+        errors.push(`Fila ${rowNum}: Nombre y Descripción son obligatorios.`);
+        return;
+      }
+      const price = Number(row.price);
+      const stock = Number(row.stock);
+      if (isNaN(price) || price < 0) {
+        errors.push(`Fila ${rowNum}: Precio inválido (${row.price}).`);
+        return;
+      }
+      if (isNaN(stock) || stock < 0) {
+        errors.push(`Fila ${rowNum}: Stock inválido (${row.stock}).`);
+        return;
+      }
+      valid.push({ ...row, price, stock });
+    });
+
+    if (valid.length === 0) {
+      return { created: 0, skipped: rows.length, errors };
+    }
+
+    // ordered: false continues inserting even if one document fails (e.g. duplicate SKU)
+    const inserted = await this.productModel.insertMany(
+      valid.map((r) => ({
+        name: r.name.trim(),
+        description: r.description.trim(),
+        price: r.price,
+        stock: r.stock,
+        sku: r.sku?.trim() || undefined,
+        brand: r.brand?.trim() || undefined,
+        category: r.category?.trim() || undefined,
+        subcategory: r.subcategory?.trim() || undefined,
+        images: [],
+      })),
+      { ordered: false },
+    );
+
+    return {
+      created: inserted.length,
+      skipped: rows.length - inserted.length,
+      errors,
+    };
   }
 }

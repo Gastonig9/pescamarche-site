@@ -1,6 +1,12 @@
 import { baseApi } from "../../services/api";
 import type { Product, ProductInput } from "./types";
 
+export interface BulkImportResult {
+  created: number;
+  skipped: number;
+  errors: string[];
+}
+
 export const productsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProducts: builder.query<Product[], void>({
@@ -38,6 +44,16 @@ export const productsApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/products/${id}`, method: "DELETE" }),
       invalidatesTags: [{ type: "Product", id: "LIST" }],
     }),
+    bulkImportProducts: builder.mutation<BulkImportResult, FormData>({
+      query: (formData) => ({
+        url: "/products/bulk",
+        method: "POST",
+        body: formData,
+        // Do NOT set Content-Type; browser sets it automatically with boundary
+        formData: true,
+      }),
+      invalidatesTags: [{ type: "Product", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
@@ -47,4 +63,5 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useBulkImportProductsMutation,
 } = productsApi;
