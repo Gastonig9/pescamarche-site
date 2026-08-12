@@ -135,19 +135,3 @@ const CardText = styled.p`
   color: ${({ theme }) => theme.colors.textLight};
   margin: 0;
 `;
-
-const Closing = styled.div`
-  margin-top: 1.75rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: #fff;
-  border-radius: 12px;
-  padding: 1.75rem 2rem;
-  text-align: center;
-`;
-
-const ClosingText = styled.p`
-  margin: 0;
-  font-size: 1.05rem;
-  max-width: 720px;
-  margin-inline: auto;
-`;

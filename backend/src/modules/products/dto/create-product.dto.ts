@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -19,13 +20,26 @@ export class CreateProductDto {
   @Min(0)
   price: number;
 
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  images?: string[];
+
   @IsString()
   @IsOptional()
-  imageUrl?: string;
+  brand?: string;
 
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsString()
+  @IsOptional()
+  subcategory?: string;
+
+  @IsString()
+  @IsOptional()
+  sku?: string;
 
   @IsNumber()
   @Min(0)

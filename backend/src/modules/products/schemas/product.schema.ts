@@ -14,11 +14,20 @@ export class Product {
   @Prop({ required: true, min: 0 })
   price: number;
 
+  @Prop({ type: [String], default: [] })
+  images: string[];
+
   @Prop()
-  imageUrl?: string;
+  brand?: string;
 
   @Prop()
   category?: string;
+
+  @Prop()
+  subcategory?: string;
+
+  @Prop({ unique: true, sparse: true, trim: true })
+  sku?: string;
 
   @Prop({ required: true, min: 0, default: 0 })
   stock: number;

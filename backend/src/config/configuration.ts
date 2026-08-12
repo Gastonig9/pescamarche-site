@@ -1,5 +1,13 @@
 export default () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   mongoUri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/pescamarche',
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  corsOrigins: (
+    process.env.CORS_ORIGIN ?? 'http://localhost:5173,http://localhost:5174'
+  )
+    .split(',')
+    .map((origin) => origin.trim()),
+  jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
+  adminEmail: process.env.ADMIN_EMAIL ?? 'admin@pescamarche.com',
+  adminPassword: process.env.ADMIN_PASSWORD ?? 'changeme123',
 });

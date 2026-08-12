@@ -53,7 +53,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card>
-      <Image src={product.imageUrl || "/favicon.svg"} alt={product.name} />
+      <Image src={product.images[0] || "/favicon.svg"} alt={product.name} />
       <Body>
         <Name>{product.name}</Name>
         <Description>{product.description}</Description>
