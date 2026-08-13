@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Chip,
   IconButton,
+  InputAdornment,
+  MenuItem,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -40,6 +44,22 @@ export function UsersPage() {
     msg: string;
     severity: "success" | "error";
   } | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    const q = search.toLowerCase();
+    return users.filter((u) => {
+      const matchSearch =
+        !q ||
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q);
+      const matchRole = !filterRole || u.role === filterRole;
+      return matchSearch && matchRole;
+    });
+  }, [users, search, filterRole]);
 
   function handleNew() {
     setEditingUser(null);
@@ -148,9 +168,41 @@ export function UsersPage() {
         </Button>
       </Stack>
 
+      <Stack direction="row" spacing={1.5} sx={{ mb: 2, flexWrap: "wrap" }}>
+        <TextField
+          size="small"
+          placeholder="Buscar por nombre o email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, minWidth: 260 }}
+        />
+        <TextField
+          select
+          size="small"
+          label="Rol"
+          value={filterRole}
+          onChange={(e) => setFilterRole(e.target.value)}
+          sx={{ minWidth: 140 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="admin">Admin</MenuItem>
+          <MenuItem value="staff">Staff</MenuItem>
+          <MenuItem value="customer">Cliente</MenuItem>
+        </TextField>
+      </Stack>
+
       <Box sx={{ height: 560, backgroundColor: "background.paper" }}>
         <DataGrid
-          rows={users ?? []}
+          rows={filteredUsers}
           columns={columns}
           loading={isLoading}
           disableRowSelectionOnClick

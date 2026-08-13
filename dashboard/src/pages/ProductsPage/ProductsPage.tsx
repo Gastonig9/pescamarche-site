@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   IconButton,
+  InputAdornment,
+  MenuItem,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -35,6 +39,41 @@ export function ProductsPage() {
     msg: string;
     severity: "success" | "error";
   } | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+
+  const brands = useMemo(
+    () =>
+      [
+        ...new Set(products?.map((p) => p.brand).filter(Boolean) as string[]),
+      ].sort(),
+    [products],
+  );
+  const categories = useMemo(
+    () =>
+      [
+        ...new Set(
+          products?.map((p) => p.category).filter(Boolean) as string[],
+        ),
+      ].sort(),
+    [products],
+  );
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    const q = search.toLowerCase();
+    return products.filter((p) => {
+      const matchSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        (p.sku ?? "").toLowerCase().includes(q);
+      const matchBrand = !filterBrand || p.brand === filterBrand;
+      const matchCategory = !filterCategory || p.category === filterCategory;
+      return matchSearch && matchBrand && matchCategory;
+    });
+  }, [products, search, filterBrand, filterCategory]);
 
   function handleNew() {
     setEditingProduct(null);
@@ -123,9 +162,58 @@ export function ProductsPage() {
         </Button>
       </Stack>
 
+      <Stack direction="row" spacing={1.5} sx={{ mb: 2, flexWrap: "wrap" }}>
+        <TextField
+          size="small"
+          placeholder="Buscar por nombre o SKU..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, minWidth: 260 }}
+        />
+        <TextField
+          select
+          size="small"
+          label="Marca"
+          value={filterBrand}
+          onChange={(e) => setFilterBrand(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todas</MenuItem>
+          {brands.map((b) => (
+            <MenuItem key={b} value={b}>
+              {b}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Categoría"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todas</MenuItem>
+          {categories.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Stack>
+
       <Box sx={{ height: 560, backgroundColor: "background.paper" }}>
         <DataGrid
-          rows={products ?? []}
+          rows={filteredProducts}
           columns={columns}
           loading={isLoading}
           disableRowSelectionOnClick

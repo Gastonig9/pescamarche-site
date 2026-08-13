@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -7,11 +7,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import {
@@ -67,6 +69,29 @@ export function OrdersPage() {
   const [status, setStatus] = useState<OrderStatus>("pending");
   const [shippingStatus, setShippingStatus] =
     useState<ShippingStatus>("pending");
+
+  const [search, setSearch] = useState("");
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterShippingStatus, setFilterShippingStatus] = useState("");
+
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    const q = search.toLowerCase();
+    return orders.filter((o) => {
+      const rawId = (o._id || o.id || "").slice(-6).toUpperCase();
+      const matchSearch =
+        !q ||
+        o.customer?.name?.toLowerCase().includes(q) ||
+        rawId.toLowerCase().includes(q);
+      const matchPayment =
+        !filterPaymentMethod || o.paymentMethod === filterPaymentMethod;
+      const matchStatus = !filterStatus || o.status === filterStatus;
+      const matchShipping =
+        !filterShippingStatus || o.shippingStatus === filterShippingStatus;
+      return matchSearch && matchPayment && matchStatus && matchShipping;
+    });
+  }, [orders, search, filterPaymentMethod, filterStatus, filterShippingStatus]);
 
   function openOrder(order: Order) {
     setSelectedOrder(order);
@@ -184,9 +209,70 @@ export function OrdersPage() {
         Pedidos
       </Typography>
 
+      <Stack direction="row" spacing={1.5} sx={{ mb: 2, flexWrap: "wrap" }}>
+        <TextField
+          size="small"
+          placeholder="Buscar por cliente o ID de pedido..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, minWidth: 260 }}
+        />
+        <TextField
+          select
+          size="small"
+          label="Medio de pago"
+          value={filterPaymentMethod}
+          onChange={(e) => setFilterPaymentMethod(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="mercadopago">MercadoPago</MenuItem>
+          <MenuItem value="alias">Alias</MenuItem>
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Estado del pago"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {statusOptions.map((o) => (
+            <MenuItem key={o.value} value={o.value}>
+              {o.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Estado del envío"
+          value={filterShippingStatus}
+          onChange={(e) => setFilterShippingStatus(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {shippingStatusOptions.map((o) => (
+            <MenuItem key={o.value} value={o.value}>
+              {o.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Stack>
+
       <Box sx={{ height: 560, backgroundColor: "background.paper" }}>
         <DataGrid
-          rows={orders ?? []}
+          rows={filteredOrders}
           columns={columns}
           loading={isLoading}
           disableRowSelectionOnClick
