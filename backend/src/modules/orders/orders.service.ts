@@ -46,4 +46,11 @@ export class OrdersService {
       throw new NotFoundException(`Order with id ${id} not found`);
     }
   }
+
+  async updateMpPreferenceId(
+    id: string,
+    mpPreferenceId: string,
+  ): Promise<void> {
+    await this.orderModel.findByIdAndUpdate(id, { mpPreferenceId }).exec();
+  }
 }

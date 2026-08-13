@@ -9,6 +9,7 @@ import { ContactPage } from "../pages/ContactPage/ContactPage";
 import { CartPage } from "../pages/CartPage/CartPage";
 import { CheckoutPage } from "../pages/CheckoutPage/CheckoutPage";
 import { OrderConfirmedPage } from "../pages/OrderConfirmedPage/OrderConfirmedPage";
+import { PaymentFailurePage } from "../pages/PaymentFailurePage/PaymentFailurePage";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "carrito", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },
       { path: "pedido-confirmado", element: <OrderConfirmedPage /> },
+      { path: "pago-fallido", element: <PaymentFailurePage /> },
     ],
   },
 ]);

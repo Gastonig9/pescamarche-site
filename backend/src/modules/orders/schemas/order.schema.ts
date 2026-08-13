@@ -2,17 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
 export type OrderStatus =
-  | 'pending'
-  | 'paid'
-  | 'processing'
-  | 'completed'
-  | 'cancelled';
+  'pending' | 'paid' | 'processing' | 'completed' | 'cancelled';
 
-export type ShippingStatus =
-  | 'pending'
-  | 'preparing'
-  | 'shipped'
-  | 'delivered';
+export type ShippingStatus = 'pending' | 'preparing' | 'shipped' | 'delivered';
 
 export type OrderDocument = Order & Document;
 
@@ -106,6 +98,9 @@ export class Order {
 
   @Prop()
   notes?: string;
+
+  @Prop()
+  mpPreferenceId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

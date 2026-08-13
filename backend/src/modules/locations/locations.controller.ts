@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -16,22 +17,37 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('locations')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
+  // Public: used by checkout form for cascading dropdowns
+  @Get('partidos')
+  findPartidos(@Query('zone') zone: string) {
+    return this.locationsService.findDistinctPartidos(zone ?? 'amba');
+  }
+
+  @Get('barrios')
+  findBarrios(@Query('partido') partido: string) {
+    return this.locationsService.findDistinctBarrios(partido ?? '');
+  }
+
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   findAll() {
     return this.locationsService.findAll();
   }
 
   @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   count() {
     return this.locationsService.count();
   }
 
   @Delete()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   clearAll() {
     return this.locationsService.clearAll();
   }

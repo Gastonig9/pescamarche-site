@@ -10,4 +10,7 @@ export default () => ({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   adminEmail: process.env.ADMIN_EMAIL ?? 'admin@pescamarche.com',
   adminPassword: process.env.ADMIN_PASSWORD ?? 'changeme123',
+  mpAccessToken: process.env.MP_ACCESS_TOKEN ?? '',
+  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  backendUrl: process.env.BACKEND_URL ?? 'http://localhost:3000',
 });

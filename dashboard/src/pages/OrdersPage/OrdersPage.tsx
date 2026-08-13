@@ -39,6 +39,27 @@ const shippingStatusOptions: { value: ShippingStatus; label: string }[] = [
   { value: "delivered", label: "Entregado" },
 ];
 
+const statusConfig: Record<
+  OrderStatus,
+  { label: string; color: "default" | "warning" | "success" | "info" | "error" }
+> = {
+  pending: { label: "Pendiente", color: "warning" },
+  paid: { label: "Pagado", color: "success" },
+  processing: { label: "En proceso", color: "info" },
+  completed: { label: "Completado", color: "success" },
+  cancelled: { label: "Cancelado", color: "error" },
+};
+
+const shippingConfig: Record<
+  ShippingStatus,
+  { label: string; color: "default" | "warning" | "success" | "info" }
+> = {
+  pending: { label: "Pendiente", color: "default" },
+  preparing: { label: "Preparando", color: "warning" },
+  shipped: { label: "Enviado", color: "info" },
+  delivered: { label: "Entregado", color: "success" },
+};
+
 export function OrdersPage() {
   const { data: orders, isLoading } = useGetOrdersQuery();
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
@@ -81,28 +102,32 @@ export function OrdersPage() {
     {
       field: "status",
       headerName: "Estado",
-      width: 140,
-      renderCell: (params) => (
-        <Chip
-          size="small"
-          label={params.value}
-          color="primary"
-          variant="outlined"
-        />
-      ),
+      width: 150,
+      renderCell: (params) => {
+        const cfg = statusConfig[params.value as OrderStatus];
+        return (
+          <Chip
+            size="small"
+            label={cfg?.label ?? params.value}
+            color={cfg?.color ?? "default"}
+          />
+        );
+      },
     },
     {
       field: "shippingStatus",
       headerName: "Envío",
       width: 140,
-      renderCell: (params) => (
-        <Chip
-          size="small"
-          label={params.value}
-          color="secondary"
-          variant="outlined"
-        />
-      ),
+      renderCell: (params) => {
+        const cfg = shippingConfig[params.value as ShippingStatus];
+        return (
+          <Chip
+            size="small"
+            label={cfg?.label ?? params.value}
+            color={cfg?.color ?? "default"}
+          />
+        );
+      },
     },
     {
       field: "actions",

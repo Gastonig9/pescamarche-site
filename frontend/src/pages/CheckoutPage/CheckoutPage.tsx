@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { clearCart } from "../../features/cart/cartSlice";
-import { useCreateOrderMutation } from "../../features/orders/ordersApi";
+import {
+  useCreateOrderMutation,
+  useCreateMpPreferenceMutation,
+} from "../../features/orders/ordersApi";
+import {
+  useGetPartidosQuery,
+  useGetBarriosQuery,
+} from "../../features/locations/locationsApi";
 
 const Container = styled.section`
   max-width: 680px;
@@ -161,28 +168,61 @@ const SubmitBtn = styled.button`
 
 const SHIPPING_METHODS = [
   { value: "retiro_en_tienda", label: "Retiro en tienda (gratis)", cost: 0 },
-  { value: "envio_correo", label: "Correo Argentino", cost: 1500 },
-  { value: "envio_envionube", label: "EnvíoNube", cost: 1800 },
+  {
+    value: "envio_caba",
+    label: "Envío a Capital Federal (CABA) — $50",
+    cost: 50,
+  },
+  {
+    value: "envio_amba",
+    label: "Envío al Gran Buenos Aires (AMBA) — $100",
+    cost: 100,
+  },
 ];
 
 export function CheckoutPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const items = useAppSelector((state) => state.cart.items);
-  const [createOrder, { isLoading }] = useCreateOrderMutation();
+  const [createOrder, { isLoading: isCreatingOrder }] =
+    useCreateOrderMutation();
+  const [createMpPreference, { isLoading: isCreatingPreference }] =
+    useCreateMpPreferenceMutation();
+  const isLoading = isCreatingOrder || isCreatingPreference;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
+  const [partido, setPartido] = useState("");
+  const [barrio, setBarrio] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [shippingMethod, setShippingMethod] = useState(
     SHIPPING_METHODS[0].value,
   );
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+
+  const isPickup = shippingMethod === "retiro_en_tienda";
+  const zone: "caba" | "amba" =
+    shippingMethod === "envio_caba" ? "caba" : "amba";
+
+  const { data: partidos = [], isFetching: loadingPartidos } =
+    useGetPartidosQuery(zone, { skip: isPickup });
+  const { data: barrios = [], isFetching: loadingBarrios } = useGetBarriosQuery(
+    partido,
+    { skip: isPickup || !partido },
+  );
+
+  function handleShippingChange(value: string) {
+    setShippingMethod(value);
+    setPartido("");
+    setBarrio("");
+  }
+
+  function handlePartidoChange(value: string) {
+    setPartido(value);
+    setBarrio("");
+  }
 
   const selectedShipping = SHIPPING_METHODS.find(
     (m) => m.value === shippingMethod,
@@ -201,7 +241,7 @@ export function CheckoutPage() {
 
     try {
       const isPickup = shippingMethod === "retiro_en_tienda";
-      await createOrder({
+      const order = await createOrder({
         customer: { name, email, phone: phone || undefined },
         items: items.map((i) => ({
           product: i.productId,
@@ -212,8 +252,12 @@ export function CheckoutPage() {
         })),
         shippingAddress: {
           street: isPickup ? "Retiro en tienda" : street,
-          city: isPickup ? "Villa Lugano" : city,
-          province: isPickup ? "Buenos Aires" : province,
+          city: isPickup ? "Villa Lugano" : `${barrio}, ${partido}`,
+          province: isPickup
+            ? "Buenos Aires"
+            : shippingMethod === "envio_caba"
+              ? "Ciudad Autónoma de Buenos Aires"
+              : "Buenos Aires",
           postalCode: isPickup ? "1439" : postalCode,
         },
         shippingMethod: selectedShipping.label,
@@ -223,7 +267,13 @@ export function CheckoutPage() {
       }).unwrap();
 
       dispatch(clearCart());
-      navigate("/pedido-confirmado");
+
+      // Create MP preference and redirect to payment for all shipping methods
+      const orderId = order._id;
+      if (!orderId) throw new Error("Order ID missing");
+
+      const { initPoint } = await createMpPreference(orderId).unwrap();
+      window.location.href = initPoint;
     } catch {
       setError("Ocurrió un error al procesar el pedido. Intentá nuevamente.");
     }
@@ -308,7 +358,7 @@ export function CheckoutPage() {
             <Select
               id="shippingMethod"
               value={shippingMethod}
-              onChange={(e) => setShippingMethod(e.target.value)}
+              onChange={(e) => handleShippingChange(e.target.value)}
             >
               {SHIPPING_METHODS.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -318,42 +368,71 @@ export function CheckoutPage() {
             </Select>
           </Field>
 
-          {shippingMethod !== "retiro_en_tienda" && (
+          {!isPickup && (
             <>
               <Field style={{ marginBottom: "1rem" }}>
                 <Label htmlFor="street">Calle y número *</Label>
                 <Input
                   id="street"
-                  required={shippingMethod !== "retiro_en_tienda"}
+                  required
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
                 />
               </Field>
+
               <Row>
                 <Field>
-                  <Label htmlFor="city">Ciudad *</Label>
-                  <Input
-                    id="city"
-                    required={shippingMethod !== "retiro_en_tienda"}
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
+                  <Label htmlFor="partido">Partido / Comuna *</Label>
+                  <Select
+                    id="partido"
+                    required
+                    value={partido}
+                    onChange={(e) => handlePartidoChange(e.target.value)}
+                    disabled={loadingPartidos}
+                  >
+                    <option value="">
+                      {loadingPartidos
+                        ? "Cargando..."
+                        : "Seleccioná un partido"}
+                    </option>
+                    {partidos.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </Select>
                 </Field>
+
                 <Field>
-                  <Label htmlFor="province">Provincia *</Label>
-                  <Input
-                    id="province"
-                    required={shippingMethod !== "retiro_en_tienda"}
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                  />
+                  <Label htmlFor="barrio">Barrio / Localidad *</Label>
+                  <Select
+                    id="barrio"
+                    required
+                    value={barrio}
+                    onChange={(e) => setBarrio(e.target.value)}
+                    disabled={!partido || loadingBarrios}
+                  >
+                    <option value="">
+                      {!partido
+                        ? "Primero elegí un partido"
+                        : loadingBarrios
+                          ? "Cargando..."
+                          : "Seleccioná un barrio"}
+                    </option>
+                    {barrios.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </Select>
                 </Field>
               </Row>
+
               <Field style={{ marginTop: "1rem" }}>
                 <Label htmlFor="postalCode">Código postal *</Label>
                 <Input
                   id="postalCode"
-                  required={shippingMethod !== "retiro_en_tienda"}
+                  required
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                 />
@@ -376,7 +455,7 @@ export function CheckoutPage() {
         <Actions>
           <BackLink to="/carrito">Volver al carrito</BackLink>
           <SubmitBtn type="submit" disabled={isLoading}>
-            {isLoading ? "Procesando..." : "Confirmar pedido"}
+            {isLoading ? "Procesando..." : "Ir a pagar con MercadoPago"}
           </SubmitBtn>
         </Actions>
       </form>

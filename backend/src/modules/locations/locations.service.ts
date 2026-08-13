@@ -25,7 +25,10 @@ export class LocationsService {
   ) {}
 
   findAll(): Promise<Location[]> {
-    return this.locationModel.find().sort({ jurisdiccionProvincia: 1, barrioLocalidad: 1 }).exec();
+    return this.locationModel
+      .find()
+      .sort({ jurisdiccionProvincia: 1, barrioLocalidad: 1 })
+      .exec();
   }
 
   count(): Promise<number> {
@@ -35,6 +38,29 @@ export class LocationsService {
   async clearAll(): Promise<{ deleted: number }> {
     const result = await this.locationModel.deleteMany({}).exec();
     return { deleted: result.deletedCount };
+  }
+
+  async findDistinctPartidos(zone: string): Promise<string[]> {
+    const filter =
+      zone === 'caba'
+        ? { jurisdiccionProvincia: { $regex: 'CABA', $options: 'i' } }
+        : {
+            jurisdiccionProvincia: {
+              $not: { $regex: 'CABA', $options: 'i' },
+              $ne: '',
+            },
+          };
+    const result = await this.locationModel
+      .distinct('partidoComuna', filter)
+      .exec();
+    return (result as string[]).filter(Boolean).sort();
+  }
+
+  async findDistinctBarrios(partido: string): Promise<string[]> {
+    const result = await this.locationModel
+      .distinct('barrioLocalidad', { partidoComuna: partido })
+      .exec();
+    return (result as string[]).filter(Boolean).sort();
   }
 
   async bulkCreate(rows: LocationRow[]): Promise<LocationBulkResult> {
