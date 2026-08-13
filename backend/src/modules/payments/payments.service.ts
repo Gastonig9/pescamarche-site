@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { OrdersService } from '../orders/orders.service';
+import { EmailService } from '../email/email.service';
 import type { OrderStatus } from '../orders/schemas/order.schema';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class PaymentsService {
   constructor(
     private readonly configService: ConfigService,
     private readonly ordersService: OrdersService,
+    private readonly emailService: EmailService,
   ) {
     this.client = new MercadoPagoConfig({
       accessToken: this.configService.get<string>('mpAccessToken') ?? '',
@@ -89,6 +91,39 @@ export class PaymentsService {
 
       const newStatus = statusMap[mpStatus] ?? 'pending';
       await this.ordersService.updateStatus(orderId, { status: newStatus });
+
+      // Send confirmation email only on approved payment
+      if (mpStatus === 'approved') {
+        const order = await this.ordersService.findOne(orderId);
+        const o = order as unknown as {
+          customer: { name: string; email: string };
+          items: {
+            name: string;
+            quantity: number;
+            price: number;
+            subtotal: number;
+          }[];
+          shippingMethod: string;
+          shippingCost: number;
+          total: number;
+          shippingAddress: {
+            street: string;
+            city: string;
+            province: string;
+            postalCode: string;
+          };
+        };
+        await this.emailService.sendOrderConfirmation({
+          customerName: o.customer.name,
+          customerEmail: o.customer.email,
+          orderId,
+          items: o.items,
+          shippingMethod: o.shippingMethod,
+          shippingCost: o.shippingCost,
+          total: o.total,
+          shippingAddress: o.shippingAddress,
+        });
+      }
     } catch {
       // Log silently — webhook must always return 200 to MP
     }

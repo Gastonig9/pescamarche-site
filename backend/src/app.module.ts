@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     OrdersModule,
     LocationsModule,
     PaymentsModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
