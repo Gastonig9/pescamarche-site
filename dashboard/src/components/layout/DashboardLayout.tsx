@@ -26,6 +26,7 @@ import {
   Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import HomeIcon from "@mui/icons-material/Home";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
@@ -35,6 +36,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { logout } from "../../features/auth/authSlice";
 import logo from "../../assets/pescamarche-logo.png";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 const DRAWER_WIDTH = 240;
 
@@ -53,6 +55,12 @@ const navItems = [
     roles: null,
   },
   { label: "Usuarios", to: "/usuarios", icon: <GroupIcon />, roles: ["admin"] },
+  {
+    label: "Notificaciones",
+    to: "/notificaciones",
+    icon: <NotificationsNoneIcon />,
+    roles: null,
+  },
   {
     label: "Configuración",
     to: "/configuracion",
@@ -138,9 +146,11 @@ export function DashboardLayout() {
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Panel de gestión
           </Typography>
+
+          <NotificationBell />
 
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
             <Avatar sx={{ width: 32, height: 32, bgcolor: "warning.main" }}>

@@ -13,14 +13,22 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  FormControlLabel,
+  IconButton,
   Snackbar,
   Stack,
+  Switch,
+  TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import {
@@ -34,6 +42,12 @@ import {
   useBulkImportProductsMutation,
   useClearProductsMutation,
 } from "../../features/products/productsApi";
+import {
+  useGetNotificationTemplatesQuery,
+  useCreateNotificationTemplateMutation,
+  useUpdateNotificationTemplateMutation,
+  useDeleteNotificationTemplateMutation,
+} from "../../features/notifications/notificationsApi";
 import type { LocationBulkResult } from "../../features/locations/types";
 import type { BulkImportResult } from "../../features/products/productsApi";
 
@@ -191,6 +205,19 @@ export function SettingsPage() {
   const [locationImportResult, setLocationImportResult] =
     useState<LocationBulkResult | null>(null);
 
+  // Notification templates
+  const { data: templates } = useGetNotificationTemplatesQuery();
+  const [createTemplate] = useCreateNotificationTemplateMutation();
+  const [updateTemplate] = useUpdateNotificationTemplateMutation();
+  const [deleteTemplate] = useDeleteNotificationTemplateMutation();
+  const [newTpl, setNewTpl] = useState({
+    type: "",
+    label: "",
+    icon: "🔔",
+    description: "",
+  });
+  const [addingTpl, setAddingTpl] = useState(false);
+
   const [snackbar, setSnackbar] = useState<{
     msg: string;
     severity: "success" | "error";
@@ -334,6 +361,159 @@ export function SettingsPage() {
           )}
         </ImportCard>
       </Stack>
+
+      {/* Notification templates */}
+      <Card variant="outlined" sx={{ mt: 3 }}>
+        <CardHeader
+          avatar={<NotificationsIcon color="primary" />}
+          title={
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Tipos de notificaciones
+            </Typography>
+          }
+          action={
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => setAddingTpl(true)}
+              sx={{ mt: 1 }}
+            >
+              Nuevo tipo
+            </Button>
+          }
+        />
+        <Divider />
+        <CardContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Activá o desactivá cada tipo de notificación. Las desactivadas no se
+            generarán aunque ocurra el evento.
+          </Typography>
+
+          {addingTpl && (
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ mb: 2, flexWrap: "wrap", alignItems: "flex-end" }}
+            >
+              <TextField
+                size="small"
+                label="Emoji"
+                value={newTpl.icon}
+                onChange={(e) =>
+                  setNewTpl((p) => ({ ...p, icon: e.target.value }))
+                }
+                sx={{ width: 70 }}
+              />
+              <TextField
+                size="small"
+                label="Tipo (key)"
+                value={newTpl.type}
+                onChange={(e) =>
+                  setNewTpl((p) => ({ ...p, type: e.target.value }))
+                }
+                sx={{ width: 160 }}
+              />
+              <TextField
+                size="small"
+                label="Etiqueta"
+                value={newTpl.label}
+                onChange={(e) =>
+                  setNewTpl((p) => ({ ...p, label: e.target.value }))
+                }
+                sx={{ width: 180 }}
+              />
+              <TextField
+                size="small"
+                label="Descripción"
+                value={newTpl.description}
+                onChange={(e) =>
+                  setNewTpl((p) => ({ ...p, description: e.target.value }))
+                }
+                sx={{ flexGrow: 1, minWidth: 200 }}
+              />
+              <Button
+                size="small"
+                variant="contained"
+                disabled={!newTpl.type || !newTpl.label}
+                onClick={async () => {
+                  await createTemplate(newTpl);
+                  setNewTpl({
+                    type: "",
+                    label: "",
+                    icon: "🔔",
+                    description: "",
+                  });
+                  setAddingTpl(false);
+                }}
+              >
+                Guardar
+              </Button>
+              <Button size="small" onClick={() => setAddingTpl(false)}>
+                Cancelar
+              </Button>
+            </Stack>
+          )}
+
+          <Stack spacing={1}>
+            {(templates ?? []).map((tpl) => (
+              <Stack
+                key={tpl._id}
+                direction="row"
+                sx={{
+                  alignItems: "center",
+                  p: 1.25,
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography sx={{ fontSize: 20, mr: 1.5 }}>
+                  {tpl.icon}
+                </Typography>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {tpl.label}
+                    <Chip
+                      label={tpl.type}
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1, fontSize: 10, height: 18 }}
+                    />
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {tpl.description}
+                  </Typography>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={tpl.enabled}
+                      onChange={(e) =>
+                        updateTemplate({
+                          id: tpl._id,
+                          body: { enabled: e.target.checked },
+                        })
+                      }
+                    />
+                  }
+                  label={tpl.enabled ? "Activa" : "Inactiva"}
+                  sx={{ mr: 1 }}
+                />
+                <Tooltip title="Eliminar">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => deleteTemplate(tpl._id)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            ))}
+          </Stack>
+        </CardContent>
+      </Card>
 
       <Snackbar
         open={Boolean(snackbar)}

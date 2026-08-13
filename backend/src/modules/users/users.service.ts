@@ -9,19 +9,23 @@ import * as bcrypt from 'bcryptjs';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async hasAnyAdmin(): Promise<boolean> {
     const count = await this.userModel.countDocuments({ role: 'admin' }).exec();
     return count > 0;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto, actorId?: string): Promise<User> {
     const existing = await this.userModel
       .findOne({ email: createUserDto.email })
       .exec();
@@ -31,7 +35,17 @@ export class UsersService {
 
     const passwordHash = await bcrypt.hash(createUserDto.password, SALT_ROUNDS);
     const { password: _password, ...rest } = createUserDto;
-    return this.userModel.create({ ...rest, passwordHash });
+    const user = await this.userModel.create({ ...rest, passwordHash });
+    this.notificationsService
+      .create({
+        type: 'usuario_creado',
+        title: 'Nuevo usuario creado',
+        body: `${createUserDto.name} (${createUserDto.email}) fue agregado con rol ${createUserDto.role ?? 'customer'}.`,
+        link: '/usuarios',
+        actorId, // the admin who created won't see this notification
+      })
+      .catch(() => void 0);
+    return user;
   }
 
   findAll(): Promise<User[]> {

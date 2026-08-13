@@ -5,16 +5,36 @@ import { Order, OrderDocument } from './schemas/order.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private readonly emailService: EmailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   create(createOrderDto: CreateOrderDto): Promise<Order> {
-    return this.orderModel.create(createOrderDto);
+    const promise = this.orderModel.create(createOrderDto);
+    // fire-and-forget — don't block order creation
+    promise.then((order) => {
+      const doc = order as unknown as {
+        _id: { toString(): string };
+        customer: { name: string };
+        total: number;
+      };
+      this.notificationsService
+        .create({
+          type: 'nueva_orden',
+          title: 'Nueva orden recibida',
+          body: `${doc.customer.name} realizó un pedido por $${doc.total.toFixed(2)}`,
+          link: '/pedidos',
+          data: { orderId: doc._id.toString() },
+        })
+        .catch(() => void 0);
+    });
+    return promise;
   }
 
   findAll(): Promise<Order[]> {
@@ -72,7 +92,55 @@ export class OrdersService {
             paymentDate: update.paymentDate as Date,
             shippingAddress: o.shippingAddress,
           })
-          .catch(() => void 0); // fire-and-forget, never block the status update
+          .catch(() => void 0);
+
+        this.notificationsService
+          .create({
+            type: 'pago_acreditado',
+            title: 'Pago acreditado',
+            body: `El pedido de ${o.customer.name} por $${o.total.toFixed(2)} fue confirmado.`,
+            link: '/pedidos',
+            data: { orderId: id },
+          })
+          .catch(() => void 0);
+      }
+    }
+
+    // Notify on payment rejection
+    if (updateOrderStatusDto.status === 'cancelled') {
+      const prev = await this.orderModel.findById(id).exec();
+      if (prev && prev.status !== 'cancelled') {
+        const name =
+          (prev as unknown as { customer: { name: string } }).customer?.name ??
+          '';
+        this.notificationsService
+          .create({
+            type: 'pago_rechazado',
+            title: 'Pago rechazado',
+            body: `El pago del pedido de ${name} fue rechazado.`,
+            link: '/pedidos',
+            data: { orderId: id },
+          })
+          .catch(() => void 0);
+      }
+    }
+
+    // Notify on shipment
+    if (updateOrderStatusDto.shippingStatus === 'shipped') {
+      const prev = await this.orderModel.findById(id).exec();
+      if (prev && prev.shippingStatus !== 'shipped') {
+        const name =
+          (prev as unknown as { customer: { name: string } }).customer?.name ??
+          '';
+        this.notificationsService
+          .create({
+            type: 'pedido_enviado',
+            title: 'Pedido enviado',
+            body: `El pedido de ${name} fue marcado como enviado.`,
+            link: '/pedidos',
+            data: { orderId: id },
+          })
+          .catch(() => void 0);
       }
     }
 
