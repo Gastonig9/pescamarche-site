@@ -8,6 +8,7 @@ const STORAGE_USER_KEY = "dashboard_user";
 interface AuthState {
   token: string | null;
   user: AuthUser | null;
+  sessionExpired: boolean;
 }
 
 function loadInitialState(): AuthState {
@@ -16,6 +17,7 @@ function loadInitialState(): AuthState {
   return {
     token,
     user: rawUser ? (JSON.parse(rawUser) as AuthUser) : null,
+    sessionExpired: false,
   };
 }
 
@@ -35,11 +37,15 @@ const authSlice = createSlice({
     logout: (state) => {
       state.token = null;
       state.user = null;
+      state.sessionExpired = false;
       localStorage.removeItem(STORAGE_TOKEN_KEY);
       localStorage.removeItem(STORAGE_USER_KEY);
+    },
+    markSessionExpired: (state) => {
+      state.sessionExpired = true;
     },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, logout, markSessionExpired } = authSlice.actions;
 export const authReducer = authSlice.reducer;

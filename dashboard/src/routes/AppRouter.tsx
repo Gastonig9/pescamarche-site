@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { RequireAuth } from "../components/auth/RequireAuth";
+import { RequireRole } from "../components/auth/RequireRole";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { LoginPage } from "../pages/LoginPage/LoginPage";
 import { HomePage } from "../pages/HomePage/HomePage";
@@ -19,7 +20,10 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: "productos", element: <ProductsPage /> },
           { path: "pedidos", element: <OrdersPage /> },
-          { path: "usuarios", element: <UsersPage /> },
+          {
+            element: <RequireRole roles={["admin"]} />,
+            children: [{ path: "usuarios", element: <UsersPage /> }],
+          },
         ],
       },
     ],

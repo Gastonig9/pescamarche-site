@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -17,6 +21,8 @@ import type { Product, ProductInput } from "../../features/products/types";
 interface ProductFormDialogProps {
   open: boolean;
   initialValue: Product | null;
+  loading?: boolean;
+  error?: string;
   onClose: () => void;
   onSubmit: (values: Partial<ProductInput>) => Promise<void> | void;
 }
@@ -31,6 +37,7 @@ const emptyForm = {
   subcategory: "",
   sku: "",
   images: [] as string[],
+  featured: false,
 };
 
 type FormState = typeof emptyForm;
@@ -47,12 +54,15 @@ function toFormState(product: Product | null): FormState {
     subcategory: product.subcategory ?? "",
     sku: product.sku ?? "",
     images: product.images ?? [],
+    featured: product.featured ?? false,
   };
 }
 
 export function ProductFormDialog({
   open,
   initialValue,
+  loading = false,
+  error,
   onClose,
   onSubmit,
 }: ProductFormDialogProps) {
@@ -63,7 +73,7 @@ export function ProductFormDialog({
     setForm(toFormState(initialValue));
   }, [initialValue, open]);
 
-  function handleChange(field: keyof Omit<FormState, "images">) {
+  function handleChange(field: keyof Omit<FormState, "images" | "featured">) {
     return (event: ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: event.target.value }));
     };
@@ -112,6 +122,7 @@ export function ProductFormDialog({
       subcategory: form.subcategory || undefined,
       sku: form.sku || undefined,
       images: form.images,
+      featured: form.featured,
     });
   }
 
@@ -168,6 +179,22 @@ export function ProductFormDialog({
               value={form.sku}
               onChange={handleChange("sku")}
               fullWidth
+            />
+          </Grid>
+          <Grid size={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.featured}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      featured: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label="Producto destacado (se muestra en la página de inicio)"
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -271,10 +298,24 @@ export function ProductFormDialog({
           </Grid>
         </Grid>
       </DialogContent>
+      {error && (
+        <Alert severity="error" sx={{ mx: 3, mb: 1 }}>
+          {error}
+        </Alert>
+      )}
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          Guardar
+        <Button onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading}
+          startIcon={
+            loading ? <CircularProgress size={16} color="inherit" /> : null
+          }
+        >
+          {loading ? "Guardando..." : "Guardar"}
         </Button>
       </DialogActions>
     </Dialog>

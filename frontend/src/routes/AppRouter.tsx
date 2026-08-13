@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "../components/layout/Layout";
 import { LandingPage } from "../pages/LandingPage/LandingPage";
 import { ProductsPage } from "../pages/ProductsPage/ProductsPage";
+import { ProductDetailPage } from "../pages/ProductDetailPage/ProductDetailPage";
 import { AboutPage } from "../pages/AboutPage/AboutPage";
 import { FaqPage } from "../pages/FaqPage/FaqPage";
 import { ContactPage } from "../pages/ContactPage/ContactPage";
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: "productos", element: <ProductsPage /> },
+      { path: "productos/:id", element: <ProductDetailPage /> },
       { path: "quienes-somos", element: <AboutPage /> },
       { path: "preguntas-frecuentes", element: <FaqPage /> },
       { path: "contacto", element: <ContactPage /> },

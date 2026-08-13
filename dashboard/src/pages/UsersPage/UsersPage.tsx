@@ -1,9 +1,11 @@
 import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Chip,
   IconButton,
+  Snackbar,
   Stack,
   Typography,
 } from "@mui/material";
@@ -27,37 +29,73 @@ import { UserFormDialog } from "./UserFormDialog";
 
 export function UsersPage() {
   const { data: users, isLoading } = useGetUsersQuery();
-  const [createUser] = useCreateUserMutation();
-  const [updateUser] = useUpdateUserMutation();
+  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [dialogError, setDialogError] = useState("");
+  const [snackbar, setSnackbar] = useState<{
+    msg: string;
+    severity: "success" | "error";
+  } | null>(null);
 
   function handleNew() {
     setEditingUser(null);
+    setDialogError("");
     setDialogOpen(true);
   }
 
   function handleEdit(user: User) {
     setEditingUser(user);
+    setDialogError("");
     setDialogOpen(true);
   }
 
   async function handleDelete(id: string) {
     if (confirm("¿Eliminar este usuario?")) {
-      await deleteUser(id);
+      try {
+        await deleteUser(id).unwrap();
+        setSnackbar({ msg: "Usuario eliminado.", severity: "success" });
+      } catch {
+        setSnackbar({
+          msg: "No se pudo eliminar el usuario.",
+          severity: "error",
+        });
+      }
     }
   }
 
   async function handleSubmit(values: CreateUserInput | UpdateUserInput) {
-    if (editingUser) {
-      const userId = editingUser._id || editingUser.id || "";
-      await updateUser({ id: userId, body: values as UpdateUserInput });
-    } else {
-      await createUser(values as CreateUserInput);
+    setDialogError("");
+    try {
+      if (editingUser) {
+        const userId = editingUser._id || editingUser.id || "";
+        await updateUser({
+          id: userId,
+          body: values as UpdateUserInput,
+        }).unwrap();
+        setSnackbar({
+          msg: "Usuario actualizado correctamente.",
+          severity: "success",
+        });
+      } else {
+        await createUser(values as CreateUserInput).unwrap();
+        setSnackbar({
+          msg: "Usuario creado correctamente.",
+          severity: "success",
+        });
+      }
+      setDialogOpen(false);
+    } catch (err: unknown) {
+      const message = (err as { data?: { message?: string | string[] } })?.data
+        ?.message;
+      const text = Array.isArray(message)
+        ? message.join(" ")
+        : (message ?? "Ocurrió un error. Revisá los datos e intentá de nuevo.");
+      setDialogError(text);
     }
-    setDialogOpen(false);
   }
 
   const columns: GridColDef<User>[] = [
@@ -127,9 +165,22 @@ export function UsersPage() {
       <UserFormDialog
         open={dialogOpen}
         initialValue={editingUser}
+        loading={isCreating || isUpdating}
+        error={dialogError}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
       />
+
+      <Snackbar
+        open={Boolean(snackbar)}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={snackbar?.severity} onClose={() => setSnackbar(null)}>
+          {snackbar?.msg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

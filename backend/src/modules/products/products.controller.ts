@@ -36,7 +36,14 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'staff')
   @UseInterceptors(FileInterceptor('file'))
-  async bulkImport(@UploadedFile() file: Express.Multer.File) {
+  async bulkImport(
+    @UploadedFile()
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+    },
+  ) {
     if (!file) {
       throw new BadRequestException('No se recibió ningún archivo.');
     }
@@ -73,6 +80,12 @@ export class ProductsController {
   @Get()
   findAll() {
     return this.productsService.findAll();
+  }
+
+  // Must be declared before :id to avoid NestJS route shadowing
+  @Get(':id/related')
+  findRelated(@Param('id') id: string) {
+    return this.productsService.findRelated(id);
   }
 
   @Get(':id')

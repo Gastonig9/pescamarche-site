@@ -10,6 +10,7 @@ export interface Product {
   subcategory?: string;
   sku?: string;
   stock: number;
+  featured?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

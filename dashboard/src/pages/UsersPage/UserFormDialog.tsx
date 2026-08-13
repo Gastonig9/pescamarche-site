@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import {
+  Alert,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,6 +23,8 @@ import type {
 interface UserFormDialogProps {
   open: boolean;
   initialValue: User | null;
+  loading?: boolean;
+  error?: string;
   onClose: () => void;
   onSubmit: (values: CreateUserInput | UpdateUserInput) => Promise<void> | void;
 }
@@ -51,6 +55,8 @@ function toFormState(user: User | null): FormState {
 export function UserFormDialog({
   open,
   initialValue,
+  loading = false,
+  error,
   onClose,
   onSubmit,
 }: UserFormDialogProps) {
@@ -160,11 +166,25 @@ export function UserFormDialog({
             />
           </Grid>
         </Grid>
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          Guardar
+        <Button onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading}
+          startIcon={
+            loading ? <CircularProgress size={16} color="inherit" /> : null
+          }
+        >
+          {loading ? "Guardando..." : "Guardar"}
         </Button>
       </DialogActions>
     </Dialog>

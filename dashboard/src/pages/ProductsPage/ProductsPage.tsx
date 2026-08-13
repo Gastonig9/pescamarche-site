@@ -27,13 +27,14 @@ import { ProductFormDialog } from "./ProductFormDialog";
 
 export function ProductsPage() {
   const { data: products, isLoading } = useGetProductsQuery();
-  const [createProduct] = useCreateProductMutation();
-  const [updateProduct] = useUpdateProductMutation();
+  const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [bulkImport] = useBulkImportProductsMutation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [dialogError, setDialogError] = useState("");
   const [importResult, setImportResult] = useState<BulkImportResult | null>(
     null,
   );
@@ -42,11 +43,13 @@ export function ProductsPage() {
 
   function handleNew() {
     setEditingProduct(null);
+    setDialogError("");
     setDialogOpen(true);
   }
 
   function handleEdit(product: Product) {
     setEditingProduct(product);
+    setDialogError("");
     setDialogOpen(true);
   }
 
@@ -57,13 +60,23 @@ export function ProductsPage() {
   }
 
   async function handleSubmit(values: Partial<ProductInput>) {
-    if (editingProduct) {
-      const productId = editingProduct._id || editingProduct.id || "";
-      await updateProduct({ id: productId, body: values });
-    } else {
-      await createProduct(values);
+    setDialogError("");
+    try {
+      if (editingProduct) {
+        const productId = editingProduct._id || editingProduct.id || "";
+        await updateProduct({ id: productId, body: values }).unwrap();
+      } else {
+        await createProduct(values).unwrap();
+      }
+      setDialogOpen(false);
+    } catch (err: unknown) {
+      const message = (err as { data?: { message?: string | string[] } })?.data
+        ?.message;
+      const text = Array.isArray(message)
+        ? message.join(" ")
+        : (message ?? "Ocurrió un error al guardar.");
+      setDialogError(text);
     }
-    setDialogOpen(false);
   }
 
   async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -166,6 +179,8 @@ export function ProductsPage() {
       <ProductFormDialog
         open={dialogOpen}
         initialValue={editingProduct}
+        loading={isCreating || isUpdating}
+        error={dialogError}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
       />

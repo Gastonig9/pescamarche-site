@@ -45,4 +45,7 @@ export class CreateProductDto {
   @Min(0)
   @IsOptional()
   stock?: number;
+
+  @IsOptional()
+  featured?: boolean;
 }

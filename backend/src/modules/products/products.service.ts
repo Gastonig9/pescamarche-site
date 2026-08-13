@@ -64,6 +64,25 @@ export class ProductsService {
     }
   }
 
+  async findRelated(id: string, limit = 5): Promise<Record<string, unknown>[]> {
+    const product = await this.productModel.findById(id).lean().exec();
+    if (!product) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+
+    const match: Record<string, unknown> = { _id: { $ne: product._id } };
+    if (product.category) {
+      match.category = product.category;
+    }
+
+    // $sample returns random documents — add id virtual manually
+    return this.productModel.aggregate([
+      { $match: match },
+      { $sample: { size: limit } },
+      { $addFields: { id: { $toString: '$_id' } } },
+    ]);
+  }
+
   async bulkCreate(rows: BulkRow[]): Promise<BulkImportResult> {
     const valid: BulkRow[] = [];
     const errors: string[] = [];

@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { keyframes } from "styled-components";
 import styled from "styled-components";
 import logo from "../../assets/pescamarche-logo.png";
 import banner from "../../assets/pescamarche-banner.jpeg";
+import { useGetProductsQuery } from "../../features/products/productsApi";
+import { ProductCard } from "../../components/product/ProductCard";
 
 const Hero = styled.section`
   position: relative;
@@ -117,7 +120,32 @@ const ProductsTeaserText = styled.p`
   color: ${({ theme }) => theme.colors.textLight};
 `;
 
+const FeaturedGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin: 1.75rem auto 2rem;
+  max-width: 1100px;
+  text-align: left;
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+const Spinner = styled.div`
+  width: 38px;
+  height: 38px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ${spin} 0.75s linear infinite;
+  margin: 2rem auto;
+`;
+
 export function LandingPage() {
+  const { data: products, isLoading: loadingProducts } = useGetProductsQuery();
+  const featured = products?.filter((p) => p.featured) ?? [];
   return (
     <>
       <Hero>
@@ -150,12 +178,33 @@ export function LandingPage() {
       </Section>
 
       <ProductsTeaser>
-        <h2>Nuestros productos</h2>
-        <ProductsTeaserText>
-          Muy pronto vas a poder ver acá nuestro catálogo completo. Mientras
-          tanto, escribinos y te asesoramos con lo que estás buscando.
-        </ProductsTeaserText>
-        <CtaButton to="/productos">Ver productos</CtaButton>
+        <h2>
+          {featured.length > 0 ? "Productos destacados" : "Nuestros productos"}
+        </h2>
+
+        {loadingProducts && <Spinner />}
+
+        {!loadingProducts && featured.length > 0 ? (
+          <>
+            <FeaturedGrid>
+              {featured.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </FeaturedGrid>
+            <CtaButton to="/productos">Ver catálogo completo</CtaButton>
+          </>
+        ) : (
+          !loadingProducts && (
+            <>
+              <ProductsTeaserText>
+                Muy pronto vas a poder ver acá nuestro catálogo completo.
+                Mientras tanto, escribinos y te asesoramos con lo que estás
+                buscando.
+              </ProductsTeaserText>
+              <CtaButton to="/productos">Ver productos</CtaButton>
+            </>
+          )
+        )}
       </ProductsTeaser>
     </>
   );

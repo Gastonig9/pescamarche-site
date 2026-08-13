@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import type { Product } from "../../features/products/types";
 import { useAppDispatch } from "../../app/hooks";
 import { addItem } from "../../features/cart/cartSlice";
+import fallbackImg from "../../assets/pescamarche-logo-NoPng.png";
 
 const Card = styled.article`
   background-color: ${({ theme }) => theme.colors.surface};
@@ -17,39 +19,46 @@ const Card = styled.article`
   }
 `;
 
+const CardLink = styled(Link)`
+  display: block;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover img {
+    opacity: 0.92;
+  }
+`;
+
 const Image = styled.img`
   width: 100%;
   height: 180px;
   object-fit: cover;
   background-color: ${({ theme }) => theme.colors.background};
+  transition: opacity 0.15s;
 `;
 
 const Body = styled.div`
-  padding: 1rem;
+  padding: 0.85rem 1rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0.4rem;
 `;
 
 const Name = styled.h3`
-  font-size: 1.1rem;
-`;
-
-const Description = styled.p`
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.colors.textLight};
-  flex: 1;
+  font-size: 1rem;
 `;
 
 const Price = styled.span`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary};
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+`;
+
+const Footer = styled.div`
+  padding: 0.75rem 1rem 1rem;
 `;
 
 const AddToCartBtn = styled.button`
-  margin-top: 0.75rem;
   width: 100%;
   padding: 0.55rem 1rem;
   border: none;
@@ -72,11 +81,12 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const dispatch = useAppDispatch();
+  const productId = product._id || product.id;
 
   function handleAddToCart() {
     dispatch(
       addItem({
-        productId: product.id,
+        productId,
         name: product.name,
         price: product.price,
         image: product.images[0] || "",
@@ -87,15 +97,18 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card>
-      <Image src={product.images[0] || "/favicon.svg"} alt={product.name} />
-      <Body>
-        <Name>{product.name}</Name>
-        <Description>{product.description}</Description>
-        <Price>${product.price.toFixed(2)}</Price>
+      <CardLink to={`/productos/${productId}`}>
+        <Image src={product.images[0] || fallbackImg} alt={product.name} />
+        <Body>
+          <Name>{product.name}</Name>
+          <Price>${product.price.toFixed(2)}</Price>
+        </Body>
+      </CardLink>
+      <Footer>
         <AddToCartBtn onClick={handleAddToCart}>
           Agregar al carrito
         </AddToCartBtn>
-      </Body>
+      </Footer>
     </Card>
   );
 }

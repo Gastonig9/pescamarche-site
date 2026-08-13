@@ -9,6 +9,11 @@ import {
   AppBar,
   Avatar,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Drawer,
   IconButton,
   List,
@@ -33,10 +38,20 @@ import logo from "../../assets/pescamarche-logo.png";
 const DRAWER_WIDTH = 240;
 
 const navItems = [
-  { label: "Inicio", to: "/", icon: <HomeIcon /> },
-  { label: "Productos", to: "/productos", icon: <Inventory2Icon /> },
-  { label: "Pedidos", to: "/pedidos", icon: <LocalShippingIcon /> },
-  { label: "Usuarios", to: "/usuarios", icon: <GroupIcon /> },
+  { label: "Inicio", to: "/", icon: <HomeIcon />, roles: null },
+  {
+    label: "Productos",
+    to: "/productos",
+    icon: <Inventory2Icon />,
+    roles: null,
+  },
+  {
+    label: "Pedidos",
+    to: "/pedidos",
+    icon: <LocalShippingIcon />,
+    roles: null,
+  },
+  { label: "Usuarios", to: "/usuarios", icon: <GroupIcon />, roles: ["admin"] },
 ];
 
 export function DashboardLayout() {
@@ -46,9 +61,19 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const sessionExpired = useAppSelector((state) => state.auth.sessionExpired);
+  // Filter nav items by role; null means visible to everyone
+  const visibleNavItems = navItems.filter(
+    (item) => !item.roles || item.roles.includes(user?.role ?? ""),
+  );
 
   function handleLogout() {
     setAnchorEl(null);
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  }
+
+  function handleSessionExpiredLogin() {
     dispatch(logout());
     navigate("/login", { replace: true });
   }
@@ -71,7 +96,7 @@ export function DashboardLayout() {
         </Typography>
       </Toolbar>
       <List sx={{ flex: 1 }}>
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <ListItemButton
             key={item.to}
             component={RouterLink}
@@ -176,6 +201,26 @@ export function DashboardLayout() {
           <Outlet />
         </Box>
       </Box>
+
+      {/* Session expired — forces re-login, no dismiss */}
+      <Dialog open={sessionExpired} disableEscapeKeyDown>
+        <DialogTitle>Sesión expirada</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tu sesión ha expirado o no tenés permisos para esta acción. Por
+            favor, volvé a iniciar sesión.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={handleSessionExpiredLogin}
+            autoFocus
+          >
+            Ir al login
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

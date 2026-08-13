@@ -1,4 +1,5 @@
 export interface Product {
+  _id?: string;
   id: string;
   name: string;
   description: string;
@@ -9,4 +10,5 @@ export interface Product {
   subcategory?: string;
   sku?: string;
   stock: number;
+  featured?: boolean;
 }
