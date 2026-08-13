@@ -7,6 +7,7 @@ import { HomePage } from "../pages/HomePage/HomePage";
 import { ProductsPage } from "../pages/ProductsPage/ProductsPage";
 import { OrdersPage } from "../pages/OrdersPage/OrdersPage";
 import { UsersPage } from "../pages/UsersPage/UsersPage";
+import { SettingsPage } from "../pages/SettingsPage/SettingsPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -22,7 +23,10 @@ export const router = createBrowserRouter([
           { path: "pedidos", element: <OrdersPage /> },
           {
             element: <RequireRole roles={["admin"]} />,
-            children: [{ path: "usuarios", element: <UsersPage /> }],
+            children: [
+              { path: "usuarios", element: <UsersPage /> },
+              { path: "configuracion", element: <SettingsPage /> },
+            ],
           },
         ],
       },

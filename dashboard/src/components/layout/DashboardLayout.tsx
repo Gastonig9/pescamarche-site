@@ -30,6 +30,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import GroupIcon from "@mui/icons-material/Group";
+import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { logout } from "../../features/auth/authSlice";
@@ -52,6 +53,12 @@ const navItems = [
     roles: null,
   },
   { label: "Usuarios", to: "/usuarios", icon: <GroupIcon />, roles: ["admin"] },
+  {
+    label: "Configuración",
+    to: "/configuracion",
+    icon: <SettingsIcon />,
+    roles: ["admin"],
+  },
 ];
 
 export function DashboardLayout() {

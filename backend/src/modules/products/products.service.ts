@@ -64,6 +64,11 @@ export class ProductsService {
     }
   }
 
+  async clearAll(): Promise<{ deleted: number }> {
+    const result = await this.productModel.deleteMany({}).exec();
+    return { deleted: result.deletedCount };
+  }
+
   async findRelated(id: string, limit = 5): Promise<Record<string, unknown>[]> {
     const product = await this.productModel.findById(id).lean().exec();
     if (!product) {

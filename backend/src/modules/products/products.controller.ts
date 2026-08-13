@@ -100,6 +100,13 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto);
   }
 
+  @Delete()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  clearAll() {
+    return this.productsService.clearAll();
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'staff')
