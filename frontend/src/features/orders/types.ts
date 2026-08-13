@@ -22,6 +22,7 @@ export interface CreateOrderPayload {
   shippingCost: number;
   total: number;
   notes?: string;
+  paymentMethod?: "mercadopago" | "alias";
 }
 
 export interface Order extends CreateOrderPayload {

@@ -85,13 +85,34 @@ export function OrdersPage() {
   }
 
   const columns: GridColDef<Order>[] = [
-    { field: "id", headerName: "ID", width: 90 },
+    {
+      field: "id",
+      headerName: "Pedido",
+      width: 110,
+      valueGetter: (_value, row) => {
+        const raw = row._id || row.id || "";
+        return raw ? `#${raw.slice(-6).toUpperCase()}` : "—";
+      },
+    },
     {
       field: "customer",
       headerName: "Cliente",
       flex: 1,
       minWidth: 160,
       valueGetter: (_value, row) => row.customer?.name,
+    },
+    {
+      field: "paymentMethod",
+      headerName: "Medio de pago",
+      width: 150,
+      renderCell: (params) => (
+        <Chip
+          size="small"
+          label={params.value === "alias" ? "Alias" : "MercadoPago"}
+          color={params.value === "alias" ? "secondary" : "primary"}
+          variant="outlined"
+        />
+      ),
     },
     {
       field: "total",
@@ -128,6 +149,21 @@ export function OrdersPage() {
           />
         );
       },
+    },
+    {
+      field: "paymentDate",
+      headerName: "Fecha de pago",
+      width: 150,
+      valueFormatter: (value: string) =>
+        value
+          ? new Intl.DateTimeFormat("es-AR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }).format(new Date(value))
+          : "—",
     },
     {
       field: "actions",

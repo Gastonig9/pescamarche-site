@@ -10,6 +10,8 @@ export interface OrderEmailData {
   shippingMethod: string;
   shippingCost: number;
   total: number;
+  paymentMethod: string;
+  paymentDate: Date;
   shippingAddress?: {
     street: string;
     city: string;
@@ -35,6 +37,22 @@ export class EmailService {
 
   async sendOrderConfirmation(data: OrderEmailData): Promise<void> {
     const subject = `✅ Pago confirmado - Pedido #${data.orderId.slice(-6).toUpperCase()} | Pescamarche`;
+
+    const paymentMethodLabel =
+      data.paymentMethod === 'alias'
+        ? 'Transferencia bancaria (alias)'
+        : 'MercadoPago';
+
+    const paymentDateStr = data.paymentDate
+      ? new Intl.DateTimeFormat('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'America/Argentina/Buenos_Aires',
+        }).format(new Date(data.paymentDate))
+      : '-';
 
     const itemsRows = data.items
       .map(
@@ -118,6 +136,18 @@ export class EmailService {
                 <td style="padding:12px 0 0;text-align:right;font-size:17px;font-weight:700;color:#1b2559;">$${data.total.toFixed(2)}</td>
               </tr>
             </table>
+
+            <!-- Payment info -->
+            <div style="background:#f0f4ff;border-radius:6px;padding:14px 20px;margin-bottom:24px;display:flex;gap:32px;flex-wrap:wrap;">
+              <div>
+                <p style="margin:0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Medio de pago</p>
+                <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#1b2559;">${paymentMethodLabel}</p>
+              </div>
+              <div>
+                <p style="margin:0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Fecha de pago</p>
+                <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#1b2559;">${paymentDateStr}</p>
+              </div>
+            </div>
 
             <!-- Shipping info -->
             <div style="background:#f9f9f9;border-radius:6px;padding:16px 20px;margin-bottom:24px;">

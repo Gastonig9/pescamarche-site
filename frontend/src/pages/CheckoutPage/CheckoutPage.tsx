@@ -166,6 +166,76 @@ const SubmitBtn = styled.button`
   }
 `;
 
+const PaymentOptions = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PaymentCard = styled.label<{ $selected: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid
+    ${({ theme, $selected }) =>
+      $selected ? theme.colors.primary : theme.colors.border};
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  background: ${({ $selected, theme }) =>
+    $selected ? `${theme.colors.primary}0d` : theme.colors.surface};
+
+  input {
+    display: none;
+  }
+  span {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+`;
+
+const AliasBox = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: ${({ theme }) => theme.colors.background};
+`;
+
+const AliasCode = styled.p`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.primary};
+  letter-spacing: 2px;
+  margin: 0.5rem 0;
+`;
+
+const CopyBtn = styled.button`
+  padding: 0.4rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 6px;
+  background: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    color: #fff;
+  }
+`;
+
+const ALIAS = "gastonig.mp";
+
 const SHIPPING_METHODS = [
   { value: "retiro_en_tienda", label: "Retiro en tienda (gratis)", cost: 0 },
   {
@@ -201,6 +271,10 @@ export function CheckoutPage() {
   );
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"mercadopago" | "alias">(
+    "mercadopago",
+  );
+  const [copied, setCopied] = useState(false);
 
   const isPickup = shippingMethod === "retiro_en_tienda";
   const zone: "caba" | "amba" =
@@ -264,9 +338,15 @@ export function CheckoutPage() {
         shippingCost: selectedShipping.cost,
         total,
         notes: notes || undefined,
+        paymentMethod,
       }).unwrap();
 
       dispatch(clearCart());
+
+      if (paymentMethod === "alias") {
+        window.location.href = `/pedido-pendiente?orderId=${order._id}&total=${total}`;
+        return;
+      }
 
       // Create MP preference and redirect to payment for all shipping methods
       const orderId = order._id;
@@ -349,6 +429,61 @@ export function CheckoutPage() {
               onChange={(e) => setPhone(e.target.value)}
             />
           </Field>
+        </Section>
+
+        <Section>
+          <legend>Método de pago</legend>
+          <PaymentOptions>
+            <PaymentCard $selected={paymentMethod === "mercadopago"}>
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="mercadopago"
+                checked={paymentMethod === "mercadopago"}
+                onChange={() => setPaymentMethod("mercadopago")}
+              />
+              <span>💳 MercadoPago</span>
+            </PaymentCard>
+            <PaymentCard $selected={paymentMethod === "alias"}>
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="alias"
+                checked={paymentMethod === "alias"}
+                onChange={() => setPaymentMethod("alias")}
+              />
+              <span>🏦 Transferencia / Alias</span>
+            </PaymentCard>
+          </PaymentOptions>
+
+          {paymentMethod === "alias" && (
+            <AliasBox>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>
+                Realizá la transferencia al siguiente alias:
+              </p>
+              <AliasCode>{ALIAS}</AliasCode>
+              <CopyBtn
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(ALIAS);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? "✓ Copiado" : "📋 Copiar alias"}
+              </CopyBtn>
+              <p
+                style={{
+                  margin: "0.75rem 0 0",
+                  fontSize: "0.82rem",
+                  color: "#5a6270",
+                }}
+              >
+                Una vez confirmada la transferencia el equipo de Pescamarche
+                actualizará el estado de tu pedido y recibirás un correo.
+              </p>
+            </AliasBox>
+          )}
         </Section>
 
         <Section>
@@ -455,7 +590,11 @@ export function CheckoutPage() {
         <Actions>
           <BackLink to="/carrito">Volver al carrito</BackLink>
           <SubmitBtn type="submit" disabled={isLoading}>
-            {isLoading ? "Procesando..." : "Ir a pagar con MercadoPago"}
+            {isLoading
+              ? "Procesando..."
+              : paymentMethod === "alias"
+                ? "Confirmar pedido"
+                : "Ir a pagar con MercadoPago"}
           </SubmitBtn>
         </Actions>
       </form>

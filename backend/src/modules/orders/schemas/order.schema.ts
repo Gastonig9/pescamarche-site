@@ -101,6 +101,12 @@ export class Order {
 
   @Prop()
   mpPreferenceId?: string;
+
+  @Prop({ enum: ['mercadopago', 'alias'], default: 'mercadopago' })
+  paymentMethod: string;
+
+  @Prop()
+  paymentDate?: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

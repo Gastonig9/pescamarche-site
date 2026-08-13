@@ -40,6 +40,8 @@ export interface Order {
   status: OrderStatus;
   total: number;
   notes?: string;
+  paymentMethod?: string;
+  paymentDate?: string;
   createdAt: string;
 }
 

@@ -101,4 +101,8 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsString()
+  @IsOptional()
+  paymentMethod?: string;
 }

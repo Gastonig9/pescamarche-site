@@ -4,11 +4,13 @@ import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    private readonly emailService: EmailService,
   ) {}
 
   create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -31,8 +33,51 @@ export class OrdersService {
     id: string,
     updateOrderStatusDto: UpdateOrderStatusDto,
   ): Promise<Order> {
+    const update: Record<string, unknown> = { ...updateOrderStatusDto };
+
+    // Auto-set paymentDate and send email on first transition to 'paid'
+    if (updateOrderStatusDto.status === 'paid') {
+      const existing = await this.orderModel.findById(id).exec();
+      if (existing && existing.status !== 'paid') {
+        update.paymentDate = new Date();
+        const o = existing as unknown as {
+          customer: { name: string; email: string };
+          items: {
+            name: string;
+            quantity: number;
+            price: number;
+            subtotal: number;
+          }[];
+          shippingMethod: string;
+          shippingCost: number;
+          total: number;
+          paymentMethod: string;
+          shippingAddress: {
+            street: string;
+            city: string;
+            province: string;
+            postalCode: string;
+          };
+        };
+        this.emailService
+          .sendOrderConfirmation({
+            customerName: o.customer.name,
+            customerEmail: o.customer.email,
+            orderId: id,
+            items: o.items,
+            shippingMethod: o.shippingMethod,
+            shippingCost: o.shippingCost,
+            total: o.total,
+            paymentMethod: o.paymentMethod ?? 'mercadopago',
+            paymentDate: update.paymentDate as Date,
+            shippingAddress: o.shippingAddress,
+          })
+          .catch(() => void 0); // fire-and-forget, never block the status update
+      }
+    }
+
     const order = await this.orderModel
-      .findByIdAndUpdate(id, updateOrderStatusDto, { new: true })
+      .findByIdAndUpdate(id, update, { new: true })
       .exec();
     if (!order) {
       throw new NotFoundException(`Order with id ${id} not found`);
