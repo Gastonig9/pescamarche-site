@@ -47,6 +47,9 @@ async function bootstrap() {
   });
 
   const port = configService.get<number>('port') ?? 3000;
+  // Trust Render/proxy reverse-proxy headers (needed for correct IP/HTTPS detection)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   await app.listen(port);
 
   const docsUrl = `http://localhost:${port}/api/docs`;
