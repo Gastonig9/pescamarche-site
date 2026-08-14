@@ -1,0 +1,20 @@
+# Render Infrastructure-as-Code
+# Docs: https://render.com/docs/yaml-spec
+services:
+  - type: web
+    name: pescamarche-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    healthCheckPath: /api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Todas las demás variables se configuran en el dashboard de Render (Settings > Environment):
+      # MONGO_URI, JWT_SECRET, JWT_EXPIRES_IN, CORS_ORIGIN,
+      # ADMIN_EMAIL, ADMIN_PASSWORD, MP_ACCESS_TOKEN, FRONTEND_URL, BACKEND_URL,
+      # GMAIL_USER, GMAIL_APP_PASSWORD, CA_API_KEY, CA_AGREEMENT_ID, etc.
