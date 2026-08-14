@@ -220,7 +220,7 @@ export function DashboardLayout() {
       </Box>
 
       {/* Session expired — forces re-login, no dismiss */}
-      <Dialog open={sessionExpired} disableEscapeKeyDown>
+      <Dialog open={sessionExpired}>
         <DialogTitle>Sesión expirada</DialogTitle>
         <DialogContent>
           <Typography>

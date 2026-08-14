@@ -46,11 +46,12 @@ export function NotificationBell() {
     pollingInterval: 10_000,
   });
 
-  // Fetch full list only when popover is open
-  const { data: notifications, isLoading } = useGetNotificationsQuery(
+  // Fetch full list only when popover is open; limit display to 5
+  const { data: allNotifications, isLoading } = useGetNotificationsQuery(
     undefined,
     { skip: !open },
   );
+  const notifications = allNotifications?.slice(0, 5);
 
   const [markRead] = useMarkReadMutation();
   const [markAllRead] = useMarkAllReadMutation();
@@ -155,8 +156,10 @@ export function NotificationBell() {
                   alignItems="flex-start"
                   sx={{
                     cursor: n.link ? "pointer" : "default",
-                    bgcolor: n.read ? "transparent" : "primary.50",
-                    "&:hover": { bgcolor: "action.hover" },
+                    borderLeft: n.read ? "3px solid transparent" : "3px solid",
+                    borderLeftColor: n.read ? "transparent" : "primary.main",
+                    bgcolor: n.read ? "transparent" : "action.hover",
+                    "&:hover": { bgcolor: "action.selected" },
                     pr: 1,
                   }}
                   onClick={() => handleClick(n._id, n.link)}
@@ -227,6 +230,21 @@ export function NotificationBell() {
             ))}
           </List>
         )}
+
+        {/* Footer link to full page */}
+        <Divider />
+        <Box sx={{ p: 1, textAlign: "center" }}>
+          <Button
+            size="small"
+            sx={{ fontSize: 12 }}
+            onClick={() => {
+              handleClose();
+              navigate("/notificaciones");
+            }}
+          >
+            Ver todas las notificaciones
+          </Button>
+        </Box>
       </Popover>
     </>
   );

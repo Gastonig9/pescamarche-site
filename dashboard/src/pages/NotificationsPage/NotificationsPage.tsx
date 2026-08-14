@@ -114,9 +114,11 @@ export function NotificationsPage() {
               key={n._id}
               divider={i < notifications.length - 1}
               sx={{
-                bgcolor: n.read ? "transparent" : "primary.50",
+                borderLeft: n.read ? "4px solid transparent" : "4px solid",
+                borderLeftColor: n.read ? "transparent" : "primary.main",
+                bgcolor: n.read ? "transparent" : "action.hover",
                 cursor: n.link ? "pointer" : "default",
-                "&:hover": { bgcolor: "action.hover" },
+                "&:hover": { bgcolor: "action.selected" },
                 gap: 1,
               }}
               onClick={() => handleClick(n._id, n.read, n.link)}

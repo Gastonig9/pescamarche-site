@@ -25,9 +25,9 @@ export class UsersController {
   @Post()
   create(
     @Body() createUserDto: CreateUserDto,
-    @Req() req: { user: { sub: string } },
+    @Req() req: { user: { userId: string } },
   ) {
-    return this.usersService.create(createUserDto, req.user?.sub);
+    return this.usersService.create(createUserDto, req.user?.userId);
   }
 
   @Get()

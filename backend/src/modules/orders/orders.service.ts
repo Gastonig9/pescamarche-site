@@ -6,24 +6,35 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Product, ProductDocument } from '../products/schemas/product.schema';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     private readonly emailService: EmailService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   create(createOrderDto: CreateOrderDto): Promise<Order> {
     const promise = this.orderModel.create(createOrderDto);
-    // fire-and-forget — don't block order creation
-    promise.then((order) => {
+    // fire-and-forget side effects
+    promise.then(async (order) => {
       const doc = order as unknown as {
         _id: { toString(): string };
         customer: { name: string };
         total: number;
+        items: { product: string; quantity: number }[];
       };
+
+      // Decrement stock for each ordered product
+      for (const item of doc.items ?? []) {
+        await this.productModel
+          .findByIdAndUpdate(item.product, { $inc: { stock: -item.quantity } })
+          .exec();
+      }
+
       this.notificationsService
         .create({
           type: 'nueva_orden',
