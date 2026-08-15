@@ -6,12 +6,14 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node dist/main
     healthCheckPath: /api
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: PORT
         value: 10000
       # Todas las demás variables se configuran en el dashboard de Render (Settings > Environment):
