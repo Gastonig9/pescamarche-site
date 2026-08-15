@@ -132,7 +132,7 @@ const StockBadge = styled.span<{ $inStock: boolean }>`
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: ${({ $inStock, theme }) => ($inStock ? "#e6f4ea" : "#fdecea")};
+  background: ${({ $inStock }) => ($inStock ? "#e6f4ea" : "#fdecea")};
   color: ${({ $inStock }) => ($inStock ? "#2e7d32" : "#c62828")};
 `;
 

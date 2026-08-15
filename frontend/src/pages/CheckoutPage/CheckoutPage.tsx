@@ -121,7 +121,7 @@ const SummaryRow = styled.div`
   }
 `;
 
-const Error = styled.p`
+const ErrorMessage = styled.p`
   color: ${({ theme }) => theme.colors.secondary};
   font-size: 0.9rem;
   margin-bottom: 1rem;
@@ -585,7 +585,7 @@ export function CheckoutPage() {
           />
         </Section>
 
-        {error && <Error>{error}</Error>}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
 
         <Actions>
           <BackLink to="/carrito">Volver al carrito</BackLink>
