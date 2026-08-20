@@ -38,7 +38,9 @@ import { logout } from "../../features/auth/authSlice";
 import logo from "../../assets/pescamarche-logo.png";
 import { NotificationBell } from "../notifications/NotificationBell";
 
+// Responsive drawer width
 const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH_MOBILE = 200;
 
 const navItems = [
   { label: "Inicio", to: "/", icon: <HomeIcon />, roles: null },
@@ -132,11 +134,18 @@ export function DashboardLayout() {
       <AppBar
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          ml: { md: `${DRAWER_WIDTH}px` },
+          width: { xs: "100%", md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          ml: { xs: 0, md: `${DRAWER_WIDTH}px` },
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Toolbar 
+          sx={{ 
+            justifyContent: "space-between",
+            flexDirection: { xs: "row", sm: "row" },
+            gap: { xs: 1, sm: 2 },
+          }}
+        >
           <IconButton
             color="inherit"
             edge="start"
@@ -146,7 +155,17 @@ export function DashboardLayout() {
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontSize: { xs: "14px", sm: "16px", md: "18px" },
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             Panel de gestión
           </Typography>
 
@@ -184,7 +203,10 @@ export function DashboardLayout() {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
+            "& .MuiDrawer-paper": { 
+              width: { xs: DRAWER_WIDTH_MOBILE, sm: DRAWER_WIDTH },
+              transition: "width 0.3s ease",
+            },
           }}
         >
           {drawerContent}
@@ -208,13 +230,19 @@ export function DashboardLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { xs: "100%", md: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: "100vh",
           backgroundColor: "background.default",
+          transition: "width 0.3s ease",
         }}
       >
         <Toolbar />
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ 
+          p: { xs: 1.5, sm: 2, md: 3 },
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: 1.5, sm: 2 },
+        }}>
           <Outlet />
         </Box>
       </Box>
