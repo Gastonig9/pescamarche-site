@@ -6,6 +6,7 @@ import {
   updateQuantity,
   clearCart,
 } from "../../features/cart/cartSlice";
+import defaultImg from "../../assets/pescamarche-logo-NoPng.png";
 
 const Container = styled.section`
   max-width: 860px;
@@ -146,7 +147,7 @@ export function CartPage() {
           {items.map((item) => (
             <tr key={item.productId}>
               <Td>
-                <Thumbnail src={item.image || "/favicon.svg"} alt={item.name} />
+                <Thumbnail src={item.image || defaultImg} alt={item.name} />
               </Td>
               <Td>{item.name}</Td>
               <Td>${item.price.toFixed(2)}</Td>
